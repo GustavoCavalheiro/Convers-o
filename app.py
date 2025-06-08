@@ -1,12 +1,13 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, render_template
 from flask_cors import CORS
-from werkzeug.utils import secure_filename
+from werkzeug.utils import secure_filename # Embora secure_filename não seja usado diretamente, é bom ter se planeja usar no futuro para segurança
 from PIL import Image
 import os
 import mimetypes
 import uuid
-import traceback # Importa o módulo traceback para depuração
+import traceback # Para depuração, útil em desenvolvimento/deploy
 
+# Inicialização da aplicação Flask
 app = Flask(__name__)
 CORS(app)  # Habilita CORS para todas as rotas
 
@@ -14,19 +15,20 @@ CORS(app)  # Habilita CORS para todas as rotas
 UPLOAD_FOLDER = 'uploads'
 CONVERTED_FOLDER = 'converted'
 
-# Expandindo as extensões permitidas para upload para incluir os novos formatos de documento
-ALLOWED_EXTENSIONS = {
-    'png', 'jpg', 'jpeg', 'gif', 'pdf', 'doc', 'docx', 'txt',
-    'webp', 'bmp', 'tiff', 'ico', 'dds', 'tga', 'psp', 'blp', 'sgi', 'xbm', 'pcx', 'psd', 'mpo',
-    # Novos formatos de documento adicionados aqui:
-    'docm', 'dot', 'odt', 'xps', 'rtf', 'dotx', 'aw', 'djvu', 'sxw', 'dotm', 'abw', 'kwd'
-}
-
 # Criar pastas se não existirem
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(CONVERTED_FOLDER, exist_ok=True)
 
-# Formatos suportados para imagem (mantidos como estavam)
+# Expandindo as extensões permitidas para upload para incluir os novos formatos de documento
+ALLOWED_EXTENSIONS = {
+    'png', 'jpg', 'jpeg', 'gif', 'pdf', 'doc', 'docx', 'txt',
+    'webp', 'bmp', 'tiff', 'ico', 'dcm', 'tga', 'psd', 'mpo', 'j2k', 'jpf', 'jpx', 'jp2', 'jpm', 'mj2', # Adicionei dcm e j2k,jpf,jpx,jp2,jpm,mj2 para completar
+    'webp', 'bmp', 'tiff', 'ico', 'dds', 'tga', 'psp', 'blp', 'sgi', 'xbm', 'pcx', 'psd', 'mpo',
+    # Novos formatos de documento adicionados aqui:
+    'docm', 'dot', 'odt', 'xps', 'rtf', 'dotx', 'aw', 'djvu', 'sxw', 'dotm', 'abw', 'kwd', 'odt'
+}
+
+# Formatos suportados para imagem (mantidos como estavam, mas com alguns ajustes para Pillow)
 # Chaves são os nomes que aparecerão na UI e valores são os formatos internos da PIL
 FORMATS_IMG = {
     'JPG': 'JPEG',
@@ -36,16 +38,20 @@ FORMATS_IMG = {
     'BMP': 'BMP',
     'TIFF': 'TIFF',
     'GIF': 'GIF',
-    'ICO': 'ICO',    # Ícone
-    'DDS': 'DDS',    # DirectDraw Surface
-    'TGA': 'TGA',    # Truevision Targa
-    'PSP': 'PSP',    # PaintShop Pro Image
-    'BLP': 'BLP',    # Blizzard Texture Format (Pillow tem suporte limitado, pode requerer plugins)
-    'SGI': 'SGI',    # Silicon Graphics Image
-    'XBM': 'XBM',    # X BitMap
-    'PCX': 'PCX',    # Paintbrush
-    'PSD': 'PSD',    # Photoshop Document (Pillow pode ler, salvar pode ter limitações)
-    'MPO': 'MPO',    # Multi Picture Object (geralmente usado para 3D)
+    'ICO': 'ICO',      # Ícone
+    'DDS': 'DDS',      # DirectDraw Surface
+    'TGA': 'TGA',      # Truevision Targa
+    'PSP': 'PSP',      # PaintShop Pro Image
+    'BLP': 'BLP',      # Blizzard Texture Format (Pillow tem suporte limitado, pode requerer plugins)
+    'SGI': 'SGI',      # Silicon Graphics Image
+    'XBM': 'XBM',      # X BitMap
+    'PCX': 'PCX',      # Paintbrush
+    'PSD': 'PSD',      # Photoshop Document (Pillow pode ler, salvar pode ter limitações)
+    'MPO': 'MPO',      # Multi Picture Object (geralmente usado para 3D)
+    'J2K': 'JPEG2000', # JPEG 2000
+    'JP2': 'JPEG2000', # JPEG 2000
+    # DCM (DICOM) geralmente não é um formato de saída da Pillow, mas pode ser lido.
+    # Se o objetivo é converter DCM, pode ser necessário um tratamento diferente.
 }
 
 # Formatos de documento (expandidos para incluir os novos)
@@ -57,6 +63,12 @@ DOC_FORMATS = [
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Rota para a página inicial (/)
+@app.route('/')
+def index():
+    # Retorna o seu arquivo HTML principal
+    return render_template('index.html')
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -134,15 +146,19 @@ def convert_file():
                 target_format_pillow = FORMATS_IMG[formato_destino.upper()]
 
                 # Formatos que preferencialmente não devem ter canal alfa (transparência)
-                formats_no_alpha = ['JPEG', 'BMP', 'TIFF', 'ICO', 'PCX', 'SGI', 'XBM', 'MPO', 'DDS']
+                # Adicionei 'WEBP' aqui, pois WebP pode ser salvo sem alfa.
+                formats_no_alpha = ['JPEG', 'BMP', 'TIFF', 'ICO', 'PCX', 'SGI', 'XBM', 'MPO', 'DDS', 'WEBP'] 
                 
                 # Se o destino é um formato que não suporta RGBA ou é melhor em RGB,
                 # e a imagem original é RGBA, converte para RGB (remove transparência).
-                if target_format_pillow in formats_no_alpha and img.mode == 'RGBA':
-                    img = img.convert('RGB')
+                if img.mode == 'RGBA' and target_format_pillow in formats_no_alpha:
+                    # Cria um novo fundo branco para a imagem RGBA
+                    background = Image.new("RGB", img.size, (255, 255, 255))
+                    background.paste(img, mask=img.split()[3]) # Usa o canal alfa como máscara
+                    img = background
                 # Para outros modos (L, P, etc.), converte para RGB para compatibilidade geral,
                 # a menos que seja um formato que lide bem com esses modos específicos ou RGBA.
-                elif img.mode not in ('RGB', 'RGBA'): 
+                elif img.mode not in ('RGB', 'RGBA'):
                     img = img.convert('RGB')
                 # --- Fim da Lógica de tratamento de modo de cor ---
                 
@@ -152,6 +168,8 @@ def convert_file():
                     ext = 'jpeg'
                 elif ext == 'tiff':
                     ext = 'tif' # Extensão mais comum para TIFF em nomes de arquivo
+                elif ext == 'j2k' or ext == 'jp2': # Adicionando extensões para JPEG2000
+                    ext = 'jp2'
 
                 converted_name = f"{uuid.uuid4().hex}.{ext}"
                 converted_path = os.path.join(CONVERTED_FOLDER, converted_name)
@@ -164,7 +182,10 @@ def convert_file():
                     # Para ICO, é comum precisar especificar o tamanho ou usar resize
                     # Pillow pode gerar um ICO multi-tamanho. Aqui apenas o tamanho original.
                     save_params['sizes'] = [img.size]
-                
+                if formato_destino.upper() == 'JPEG':
+                    save_params['quality'] = 90 # Qualidade padrão para JPEG
+                    save_params['optimize'] = True # Otimiza o arquivo
+
                 # Salva a imagem usando os parâmetros apropriados
                 img.save(converted_path, FORMATS_IMG[formato_destino.upper()], **save_params)
                 
@@ -209,16 +230,15 @@ def convert_file():
                 # Aqui você precisaria implementar a lógica de conversão real entre formatos de documento.
                 # Por exemplo:
                 # if original_ext == 'DOCX' and target_ext == 'PDF':
-                #     # Chamar a lógica de conversão DOCX para PDF (ex: usando um conversor externo)
-                #     pass
+                #    # Chamar a lógica de conversão DOCX para PDF (ex: usando um conversor externo)
+                #    pass
                 # elif original_ext == 'PDF' and target_ext == 'TXT':
-                #     # Chamar a lógica de extração de texto de PDF
-                #     pass
+                #    # Chamar a lógica de extração de texto de PDF
+                #    pass
                 # ... e assim por diante para cada par de conversão.
                 
                 # Por enquanto, se a conversão real não estiver implementada, ele retornará erro
                 return jsonify({'success': False, 'error': f'Conversão de {original_ext} para {target_ext} não implementada no backend.'}), 400
-
 
         return jsonify({'success': False, 'error': 'Formato de destino não suportado'}), 400
 
@@ -236,10 +256,13 @@ def download_file(filename):
             CONVERTED_FOLDER,
             filename,
             as_attachment=True,
-            download_name=filename
+            download_name=filename # Define o nome de download
         )
     except FileNotFoundError:
         return jsonify({'success': False, 'error': 'Arquivo não encontrado'}), 404
 
+# A linha abaixo é APENAS para rodar localmente no seu computador.
+# No Render, o Gunicorn é responsável por iniciar a aplicação.
+# Se você tiver `debug=True` em produção, isso pode expor informações sensíveis.
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
