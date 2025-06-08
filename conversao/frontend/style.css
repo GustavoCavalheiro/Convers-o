@@ -1,0 +1,224 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  background-color: #f8f9fa;
+  font-family: Arial, sans-serif;
+  padding-top: 70px;
+}
+
+.menu-header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 63px;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(104, 104, 104, 0.1);
+  z-index: 1000;
+}
+
+.menu-header ul {
+  font-size: 26px;
+  font-weight: 900;
+  margin: 0;
+  padding: 15px 30px;
+  list-style: none;
+}
+
+.preto {
+  color: black;
+}
+
+.azul {
+  color: #0084FF;
+}
+
+.container {
+  padding-top: 100px;
+}
+
+/* O card principal que envolve tudo */
+.card {
+  border: none;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 20px !important; /* Mantém o padding para o espaço interno */
+}
+
+/* Estilo do Dropzone para a área de arrastar/clicar */
+.dropzone {
+  width: 300px;
+  height: 300px; /* Altura original do protótipo */
+  margin: 0 auto;
+  border: 2px dashed #ccc;
+  background: white;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.dropzone .dz-preview {
+  display: none !important;
+}
+
+
+.dz-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #0084FF;
+  font-size: 60px;
+  pointer-events: none;
+}
+
+.dz-message span {
+  font-size: 13px;
+  color: #777;
+  margin-top: 10px;
+}
+
+.dropzone.dz-drag-hover {
+  border-color: #0084FF;
+  background-color: #e0f2ff;
+}
+
+/* ------------------------------------------- */
+/* ESTILOS PARA A INTERFACE DE CONFIGURAÇÃO (Após upload) */
+/* ------------------------------------------- */
+
+/* Novo estilo para o container de múltiplos arquivos */
+#uploadedFilesContainer {
+  display: flex;
+  flex-direction: column; /* Para que os arquivos se empilhem verticalmente */
+  gap: 10px; /* Espaço entre cada caixa de arquivo */
+}
+
+.uploaded-file-box {
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  padding: 8px 12px;
+  display: flex; /* Para alinhar o nome do arquivo e o botão de remover */
+  justify-content: space-between;
+  align-items: center;
+  width: 100%; /* Ocupa a largura total do container */
+}
+
+.uploaded-file-box + .uploaded-file-box { /* Adiciona margem entre as caixas de arquivos */
+  margin-top: 10px;
+}
+
+.file-name-display { /* Novo nome para o span do nome do arquivo */
+  font-weight: normal;
+  color: #333;
+  font-size: 0.95rem;
+  flex-grow: 1; /* Permite que o nome do arquivo ocupe o espaço disponível */
+  white-space: nowrap; /* Impede que o texto quebre */
+  overflow: hidden; /* Esconde o excesso de texto */
+  text-overflow: ellipsis; /* Adiciona reticências para texto cortado */
+  margin-right: 10px; /* Espaço entre o nome e o botão de remover */
+}
+
+.remove-file-btn { /* Novo nome para o botão de remover */
+  font-size: 0.8rem;
+  opacity: 0.7;
+  padding: 0;
+  background: none; /* Remove o fundo padrão do botão */
+  border: none; /* Remove a borda padrão do botão */
+  cursor: pointer;
+}
+
+.convert-to-text {
+  color: #555;
+  font-size: 0.9rem;
+  margin-bottom: 8px; /* Espaço entre o texto e o dropdown */
+}
+
+#formatSelect {
+  border-radius: 4px;
+  border-color: #ddd;
+  font-size: 0.95rem;
+  padding: 8px 12px;
+  margin-bottom: 24px; /* Espaço entre o dropdown e o botão de converter */
+}
+
+#convertButton {
+  background-color: #007bff; /* Cor azul mais padrão do protótipo */
+  border-color: #007bff;
+  font-weight: bold;
+  font-size: 1.1rem;
+  padding: 12px 20px;
+  border-radius: 8px;
+}
+
+#convertButton:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+/* ------------------------------------------- */
+/* ESTILOS PARA A TELA DE SUCESSO DA CONVERSÃO */
+/* ------------------------------------------- */
+
+#conversionSuccessDisplay {
+  /* No HTML, ele começa com display: none; */
+  display: flex; /* Para centralizar conteúdo com flexbox */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 250px; /* Para manter uma altura similar às outras telas */
+}
+
+.success-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px; /* Espaço entre a mensagem e o botão de carregar outro */
+}
+
+.success-message svg {
+  margin-bottom: 8px; /* Espaço entre o ícone e o texto */
+}
+
+.success-message p {
+  color: #28a745; /* Cor verde para o texto de sucesso */
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin: 0; /* Remover margem padrão do parágrafo */
+}
+
+.load-another-btn {
+  background-color: #f8f9fa; /* Fundo cinza claro */
+  border-color: #ddd; /* Borda mais suave */
+  color: #333; /* Texto escuro */
+  font-weight: normal;
+  font-size: 1rem;
+  padding: 10px 15px;
+  border-radius: 8px;
+  display: flex; /* Para alinhar o texto e o ícone */
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px; /* Espaço entre o botão e o download */
+}
+
+.load-another-btn svg {
+  margin-left: 8px; /* Espaço entre o texto e o ícone */
+}
+
+#finalDownloadLink {
+  /* Usa os mesmos estilos do #convertButton para ser consistente */
+  background-color: #007bff;
+  border-color: #007bff;
+  font-weight: bold;
+  font-size: 1.1rem;
+  padding: 12px 20px;
+  border-radius: 8px;
+}
+
+#finalDownloadLink:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
